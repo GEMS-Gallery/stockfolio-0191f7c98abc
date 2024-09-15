@@ -1,0 +1,13 @@
+type Holding = 
+ record {
+   purchasePrice: float64;
+   quantity: float64;
+   symbol: text;
+ };
+service : {
+  addOrUpdateHolding: (text, float64, float64) -> ();
+  getAllHoldings: () -> (vec Holding) query;
+  getTotalPortfolioValue: () -> (float64) query;
+  init: () -> ();
+  removeHolding: (text) -> ();
+}

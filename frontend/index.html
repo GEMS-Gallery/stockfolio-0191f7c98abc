@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Holding App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, button {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Holding App</h1>
+    
+    <h2>Add/Update Holding</h2>
+    <form id="holdingForm">
+        <input type="text" id="symbol" placeholder="Stock Symbol" required>
+        <input type="number" id="quantity" placeholder="Quantity" step="0.01" required>
+        <input type="number" id="purchasePrice" placeholder="Purchase Price" step="0.01" required>
+        <button type="submit">Add/Update Holding</button>
+    </form>
+
+    <h2>Your Holdings</h2>
+    <table id="holdingsTable">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Quantity</th>
+                <th>Purchase Price</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>Portfolio Value</h2>
+    <p>Total Portfolio Value: $<span id="portfolioValue">0.00</span></p>
+
+    <script type="module" src="index.js"></script>
+</body>
+</html>
