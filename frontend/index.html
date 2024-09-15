@@ -3,61 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Holding App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        form {
-            margin-bottom: 20px;
-        }
-        input, button {
-            margin: 5px 0;
-        }
-    </style>
+    <title>Portfolio Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Stock Holding App</h1>
-    
-    <h2>Add/Update Holding</h2>
-    <form id="holdingForm">
-        <input type="text" id="symbol" placeholder="Stock Symbol" required>
-        <input type="number" id="quantity" placeholder="Quantity" step="0.01" required>
-        <input type="number" id="purchasePrice" placeholder="Purchase Price" step="0.01" required>
-        <button type="submit">Add/Update Holding</button>
-    </form>
-
-    <h2>Your Holdings</h2>
-    <table id="holdingsTable">
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Quantity</th>
-                <th>Purchase Price</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-    <h2>Portfolio Value</h2>
-    <p>Total Portfolio Value: $<span id="portfolioValue">0.00</span></p>
-
-    <script type="module" src="index.js"></script>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-icon" data-feather="grid"></div>
+            <div class="sidebar-icon" data-feather="bar-chart-2"></div>
+            <div class="sidebar-icon" data-feather="mail"></div>
+            <div class="sidebar-icon" data-feather="folder"></div>
+            <div class="sidebar-icon" data-feather="settings"></div>
+        </div>
+        <main class="main-content">
+            <header>
+                <h1>Holdings</h1>
+                <button class="add-asset-btn" onclick="showAddAssetModal()">
+                    <i data-feather="plus"></i>
+                    Add Asset
+                </button>
+            </header>
+            <div class="tabs">
+                <span class="tab active" onclick="showPage('holdings')">Holdings</span>
+                <span class="tab" onclick="showPage('allocations')">Allocations</span>
+            </div>
+            <div id="holdings-page" class="active">
+                <table class="holdings-table" id="holdings-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Quantity</th>
+                            <th>Market Value</th>
+                            <th>Market Price</th>
+                            <th>Performance</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="holdings-body">
+                    </tbody>
+                </table>
+            </div>
+            <div id="allocations-page">
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>Allocation</h3>
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Performance</h3>
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="add-asset-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeAddAssetModal()">&times;</span>
+            <h2>Add Asset</h2>
+            <form id="add-asset-form">
+                <label for="symbol">Symbol:</label>
+                <input type="text" id="symbol" name="symbol" required>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                <label for="quantity">Quantity:</label>
+                <input type="number" step="any" id="quantity" name="quantity" required>
+                <label for="type">Type:</label>
+                <select id="type" name="type" required>
+                    <option value="Equity">Equity</option>
+                    <option value="ETF">ETF</option>
+                    <option value="Bond">Bond</option>
+                    <option value="Crypto">Crypto</option>
+                </select>
+                <button type="submit">Add Asset</button>
+            </form>
+        </div>
+    </div>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

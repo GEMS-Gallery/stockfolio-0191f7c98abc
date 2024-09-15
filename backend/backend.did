@@ -1,13 +1,22 @@
-type Holding = 
+type HttpResponse = 
  record {
-   purchasePrice: float64;
-   quantity: float64;
-   symbol: text;
+   body: blob;
+   headers: vec record {
+                  text;
+                  text;
+                };
+   status_code: nat16;
+ };
+type HttpRequest = 
+ record {
+   body: blob;
+   headers: vec record {
+                  text;
+                  text;
+                };
+   method: text;
+   url: text;
  };
 service : {
-  addOrUpdateHolding: (text, float64, float64) -> ();
-  getAllHoldings: () -> (vec Holding) query;
-  getTotalPortfolioValue: () -> (float64) query;
-  init: () -> ();
-  removeHolding: (text) -> ();
+  http_request: (HttpRequest) -> (HttpResponse) query;
 }

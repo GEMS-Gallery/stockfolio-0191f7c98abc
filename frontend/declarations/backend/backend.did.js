@@ -1,19 +1,17 @@
 export const idlFactory = ({ IDL }) => {
-  const Holding = IDL.Record({
-    'purchasePrice' : IDL.Float64,
-    'quantity' : IDL.Float64,
-    'symbol' : IDL.Text,
+  const HttpRequest = IDL.Record({
+    'url' : IDL.Text,
+    'method' : IDL.Text,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+  });
+  const HttpResponse = IDL.Record({
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'status_code' : IDL.Nat16,
   });
   return IDL.Service({
-    'addOrUpdateHolding' : IDL.Func(
-        [IDL.Text, IDL.Float64, IDL.Float64],
-        [],
-        [],
-      ),
-    'getAllHoldings' : IDL.Func([], [IDL.Vec(Holding)], ['query']),
-    'getTotalPortfolioValue' : IDL.Func([], [IDL.Float64], ['query']),
-    'init' : IDL.Func([], [], []),
-    'removeHolding' : IDL.Func([IDL.Text], [], []),
+    'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };
