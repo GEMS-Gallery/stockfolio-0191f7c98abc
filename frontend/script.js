@@ -11,7 +11,8 @@ let isInitialized = false;
 let initializationAttempts = 0;
 const MAX_INITIALIZATION_ATTEMPTS = 3;
 
-const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
+// Use a default canister ID if not set in environment variables
+const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND || "rrkah-fqaaa-aaaaa-aaaaq-cai";
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
 
 function isValidCanisterId(id) {
@@ -24,14 +25,8 @@ function isValidCanisterId(id) {
 }
 
 async function initializeBackend() {
-  if (!canisterId) {
-    console.error("Canister ID is not set in environment variables.");
-    showError("Application configuration error. Please contact the administrator.");
-    return false;
-  }
-
   if (!isValidCanisterId(canisterId)) {
-    console.error("Invalid Canister ID in environment variables.");
+    console.error("Invalid Canister ID:", canisterId);
     showError("Application configuration error. Please contact the administrator.");
     return false;
   }

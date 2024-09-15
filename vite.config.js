@@ -22,4 +22,8 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    'process.env.VITE_CANISTER_ID_BACKEND': JSON.stringify(process.env.CANISTER_ID_BACKEND),
+    'process.env.VITE_DFX_NETWORK': JSON.stringify(process.env.DFX_NETWORK),
+  },
 });
