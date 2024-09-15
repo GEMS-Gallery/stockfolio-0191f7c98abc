@@ -7,26 +7,24 @@ feather.replace();
 let assets = [];
 let backend;
 
-const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
+const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND || 'default_canister_id';
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
 
 async function initializeBackend() {
-  if (!canisterId) {
-    console.error("Canister ID is not set. Please check your environment variables.");
-    return;
-  }
-
   try {
     const agent = new HttpAgent({ host });
     backend = Actor.createActor(idlFactory, { agent, canisterId });
+    console.log("Backend initialized successfully");
   } catch (error) {
     console.error("Failed to initialize backend:", error);
+    showError("Failed to initialize the application. Please try again later.");
   }
 }
 
 async function fetchAssets() {
   if (!backend) {
     console.error("Backend is not initialized. Unable to fetch assets.");
+    showError("Unable to fetch assets. Please try again later.");
     return;
   }
 
@@ -43,9 +41,11 @@ async function fetchAssets() {
       updateCharts();
     } else {
       console.error('Error fetching assets:', response);
+      showError("Failed to fetch assets. Please try again later.");
     }
   } catch (error) {
     console.error('Error fetching assets:', error);
+    showError("An error occurred while fetching assets. Please try again later.");
   }
 }
 
@@ -126,6 +126,7 @@ function closeAddAssetModal() {
 async function addAsset(asset) {
   if (!backend) {
     console.error("Backend is not initialized. Unable to add asset.");
+    showError("Unable to add asset. Please try again later.");
     return;
   }
 
@@ -142,11 +143,14 @@ async function addAsset(asset) {
       displayHoldings();
       updateCharts();
       closeAddAssetModal();
+      showSuccess("Asset added successfully!");
     } else {
       console.error('Error adding asset:', response);
+      showError("Failed to add asset. Please try again.");
     }
   } catch (error) {
     console.error('Error adding asset:', error);
+    showError("An error occurred while adding the asset. Please try again.");
   }
 }
 
@@ -231,13 +235,31 @@ function updatePerformanceChart(performanceData) {
   });
 }
 
+function showError(message) {
+  const errorElement = document.getElementById('error-message');
+  errorElement.textContent = message;
+  errorElement.style.display = 'block';
+  setTimeout(() => {
+    errorElement.style.display = 'none';
+  }, 5000);
+}
+
+function showSuccess(message) {
+  const successElement = document.getElementById('success-message');
+  successElement.textContent = message;
+  successElement.style.display = 'block';
+  setTimeout(() => {
+    successElement.style.display = 'none';
+  }, 5000);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeBackend();
   if (backend) {
     showPage('holdings');
     await fetchAssets();
   } else {
-    console.error("Failed to initialize backend. Please check your configuration.");
+    showError("Failed to initialize the application. Please try again later.");
   }
 
   document.getElementById('add-asset-form').addEventListener('submit', async (e) => {

@@ -1,5 +1,8 @@
 import { defineConfig } from 'vite';
 import { VitePluginEnvironment } from 'vite-plugin-environment';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export default defineConfig({
   plugins: [
