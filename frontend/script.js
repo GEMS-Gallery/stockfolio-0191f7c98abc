@@ -11,7 +11,7 @@ let isInitialized = false;
 let initializationAttempts = 0;
 const MAX_INITIALIZATION_ATTEMPTS = 3;
 
-let canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
+const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
 
 function isValidCanisterId(id) {
@@ -25,14 +25,14 @@ function isValidCanisterId(id) {
 
 async function initializeBackend() {
   if (!canisterId) {
-    showError("Canister ID is not set. Please enter it manually.");
-    showCanisterIdInput();
+    console.error("Canister ID is not set in environment variables.");
+    showError("Application configuration error. Please contact the administrator.");
     return false;
   }
 
   if (!isValidCanisterId(canisterId)) {
-    showError("Invalid Canister ID. Please check and try again.");
-    showCanisterIdInput();
+    console.error("Invalid Canister ID in environment variables.");
+    showError("Application configuration error. Please contact the administrator.");
     return false;
   }
 
@@ -60,27 +60,9 @@ async function retryInitialization() {
     await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
   }
   hideLoading();
-  showError("Failed to initialize the application after multiple attempts. Please check your canister ID and try again.");
+  showError("Failed to initialize the application. Please try again later or contact the administrator.");
   return false;
 }
-
-function showCanisterIdInput() {
-  const inputContainer = document.getElementById('canister-id-input');
-  inputContainer.style.display = 'block';
-}
-
-function hideCanisterIdInput() {
-  const inputContainer = document.getElementById('canister-id-input');
-  inputContainer.style.display = 'none';
-}
-
-document.getElementById('set-canister-id').addEventListener('click', async () => {
-  const input = document.getElementById('canister-id');
-  canisterId = input.value.trim();
-  hideCanisterIdInput();
-  initializationAttempts = 0;
-  await retryInitialization();
-});
 
 async function fetchAssets() {
   if (!isInitialized) {
@@ -175,7 +157,7 @@ function showPage(pageName) {
 
 function showAddAssetModal() {
   if (!isInitialized) {
-    showError("The application is not fully initialized. Please wait and try again.");
+    showError("The application is not fully initialized. Please try again later.");
     return;
   }
   const modal = document.getElementById('add-asset-modal');
@@ -338,13 +320,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     showPage('holdings');
     await fetchAssets();
   } else {
-    showError("Failed to initialize the application. Please check your configuration and try again.");
+    showError("Failed to initialize the application. Please try again later or contact the administrator.");
   }
 
   document.getElementById('add-asset-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!isInitialized) {
-      showError("The application is not fully initialized. Please wait and try again.");
+      showError("The application is not fully initialized. Please try again later.");
       return;
     }
     const newAsset = {
