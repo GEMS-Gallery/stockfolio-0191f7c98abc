@@ -7,6 +7,7 @@ feather.replace();
 
 let assets = [];
 let backend;
+let isInitialized = false;
 
 const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
@@ -20,29 +21,38 @@ function isValidCanisterId(id) {
   }
 }
 
-async function initializeBackend() {
+async function initializeBackend(retryCount = 0) {
   if (!canisterId) {
     showError("Canister ID is not set. Please check your environment variables.");
-    return;
+    return false;
   }
 
   if (!isValidCanisterId(canisterId)) {
     showError("Invalid Canister ID. Please check your environment variables.");
-    return;
+    return false;
   }
 
   try {
     const agent = new HttpAgent({ host });
     backend = Actor.createActor(idlFactory, { agent, canisterId });
     console.log("Backend initialized successfully");
+    isInitialized = true;
+    return true;
   } catch (error) {
     console.error("Failed to initialize backend:", error);
-    showError("Failed to initialize the application. Please try again later.");
+    if (retryCount < 3) {
+      console.log(`Retrying initialization (attempt ${retryCount + 1})...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return initializeBackend(retryCount + 1);
+    } else {
+      showError("Failed to initialize the application. Please try again later.");
+      return false;
+    }
   }
 }
 
 async function fetchAssets() {
-  if (!backend) {
+  if (!isInitialized) {
     console.error("Backend is not initialized. Unable to fetch assets.");
     showError("Unable to fetch assets. Please try again later.");
     return;
@@ -133,6 +143,10 @@ function showPage(pageName) {
 }
 
 function showAddAssetModal() {
+  if (!isInitialized) {
+    showError("The application is not fully initialized. Please wait and try again.");
+    return;
+  }
   const modal = document.getElementById('add-asset-modal');
   modal.style.display = 'block';
 }
@@ -144,7 +158,7 @@ function closeAddAssetModal() {
 }
 
 async function addAsset(asset) {
-  if (!backend) {
+  if (!isInitialized) {
     console.error("Backend is not initialized. Unable to add asset.");
     showError("Unable to add asset. Please try again later.");
     return;
@@ -274,8 +288,11 @@ function showSuccess(message) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await initializeBackend();
-  if (backend) {
+  showLoading();
+  const initialized = await initializeBackend();
+  hideLoading();
+  
+  if (initialized) {
     showPage('holdings');
     await fetchAssets();
   } else {
@@ -284,6 +301,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('add-asset-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!isInitialized) {
+      showError("The application is not fully initialized. Please wait and try again.");
+      return;
+    }
     const newAsset = {
       symbol: document.getElementById('symbol').value.toUpperCase(),
       name: document.getElementById('name').value,
@@ -300,6 +321,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 });
+
+function showLoading() {
+  const loadingElement = document.getElementById('loading');
+  loadingElement.style.display = 'flex';
+}
+
+function hideLoading() {
+  const loadingElement = document.getElementById('loading');
+  loadingElement.style.display = 'none';
+}
 
 // Expose functions to window object for use in HTML
 window.showAddAssetModal = showAddAssetModal;
