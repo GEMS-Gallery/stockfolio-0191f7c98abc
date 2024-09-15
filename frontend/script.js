@@ -11,7 +11,7 @@ let isInitialized = false;
 let initializationAttempts = 0;
 const MAX_INITIALIZATION_ATTEMPTS = 3;
 
-const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
+let canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
 
 function isValidCanisterId(id) {
@@ -25,12 +25,14 @@ function isValidCanisterId(id) {
 
 async function initializeBackend() {
   if (!canisterId) {
-    showError("Canister ID is not set. Please check your environment variables.");
+    showError("Canister ID is not set. Please enter it manually.");
+    showCanisterIdInput();
     return false;
   }
 
   if (!isValidCanisterId(canisterId)) {
-    showError("Invalid Canister ID. Please check your environment variables.");
+    showError("Invalid Canister ID. Please check and try again.");
+    showCanisterIdInput();
     return false;
   }
 
@@ -58,9 +60,27 @@ async function retryInitialization() {
     await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
   }
   hideLoading();
-  showError("Failed to initialize the application after multiple attempts. Please try again later.");
+  showError("Failed to initialize the application after multiple attempts. Please check your canister ID and try again.");
   return false;
 }
+
+function showCanisterIdInput() {
+  const inputContainer = document.getElementById('canister-id-input');
+  inputContainer.style.display = 'block';
+}
+
+function hideCanisterIdInput() {
+  const inputContainer = document.getElementById('canister-id-input');
+  inputContainer.style.display = 'none';
+}
+
+document.getElementById('set-canister-id').addEventListener('click', async () => {
+  const input = document.getElementById('canister-id');
+  canisterId = input.value.trim();
+  hideCanisterIdInput();
+  initializationAttempts = 0;
+  await retryInitialization();
+});
 
 async function fetchAssets() {
   if (!isInitialized) {
