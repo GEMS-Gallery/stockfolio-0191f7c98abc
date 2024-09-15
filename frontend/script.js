@@ -7,15 +7,29 @@ feather.replace();
 let assets = [];
 let backend;
 
-const canisterId = process.env.CANISTER_ID_BACKEND;
-const host = process.env.DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
+const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
+const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
 
 async function initializeBackend() {
-  const agent = new HttpAgent({ host });
-  backend = Actor.createActor(idlFactory, { agent, canisterId });
+  if (!canisterId) {
+    console.error("Canister ID is not set. Please check your environment variables.");
+    return;
+  }
+
+  try {
+    const agent = new HttpAgent({ host });
+    backend = Actor.createActor(idlFactory, { agent, canisterId });
+  } catch (error) {
+    console.error("Failed to initialize backend:", error);
+  }
 }
 
 async function fetchAssets() {
+  if (!backend) {
+    console.error("Backend is not initialized. Unable to fetch assets.");
+    return;
+  }
+
   try {
     const response = await backend.http_request({
       method: "GET",
@@ -110,6 +124,11 @@ function closeAddAssetModal() {
 }
 
 async function addAsset(asset) {
+  if (!backend) {
+    console.error("Backend is not initialized. Unable to add asset.");
+    return;
+  }
+
   try {
     const response = await backend.http_request({
       method: "POST",
@@ -214,8 +233,12 @@ function updatePerformanceChart(performanceData) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeBackend();
-  showPage('holdings');
-  await fetchAssets();
+  if (backend) {
+    showPage('holdings');
+    await fetchAssets();
+  } else {
+    console.error("Failed to initialize backend. Please check your configuration.");
+  }
 
   document.getElementById('add-asset-form').addEventListener('submit', async (e) => {
     e.preventDefault();
