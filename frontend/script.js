@@ -8,6 +8,8 @@ feather.replace();
 let assets = [];
 let backend;
 let isInitialized = false;
+let initializationAttempts = 0;
+const MAX_INITIALIZATION_ATTEMPTS = 3;
 
 const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
@@ -21,7 +23,7 @@ function isValidCanisterId(id) {
   }
 }
 
-async function initializeBackend(retryCount = 0) {
+async function initializeBackend() {
   if (!canisterId) {
     showError("Canister ID is not set. Please check your environment variables.");
     return false;
@@ -40,15 +42,24 @@ async function initializeBackend(retryCount = 0) {
     return true;
   } catch (error) {
     console.error("Failed to initialize backend:", error);
-    if (retryCount < 3) {
-      console.log(`Retrying initialization (attempt ${retryCount + 1})...`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return initializeBackend(retryCount + 1);
-    } else {
-      showError("Failed to initialize the application. Please try again later.");
-      return false;
-    }
+    return false;
   }
+}
+
+async function retryInitialization() {
+  while (initializationAttempts < MAX_INITIALIZATION_ATTEMPTS) {
+    showLoading(`Initializing application... Attempt ${initializationAttempts + 1}/${MAX_INITIALIZATION_ATTEMPTS}`);
+    const success = await initializeBackend();
+    if (success) {
+      hideLoading();
+      return true;
+    }
+    initializationAttempts++;
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+  }
+  hideLoading();
+  showError("Failed to initialize the application after multiple attempts. Please try again later.");
+  return false;
 }
 
 async function fetchAssets() {
@@ -287,10 +298,21 @@ function showSuccess(message) {
   }, 5000);
 }
 
+function showLoading(message = "Loading...") {
+  const loadingElement = document.getElementById('loading');
+  const loadingMessage = document.getElementById('loading-message');
+  loadingMessage.textContent = message;
+  loadingElement.style.display = 'flex';
+}
+
+function hideLoading() {
+  const loadingElement = document.getElementById('loading');
+  loadingElement.style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  showLoading();
-  const initialized = await initializeBackend();
-  hideLoading();
+  showLoading("Initializing application...");
+  const initialized = await retryInitialization();
   
   if (initialized) {
     showPage('holdings');
@@ -321,16 +343,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 });
-
-function showLoading() {
-  const loadingElement = document.getElementById('loading');
-  loadingElement.style.display = 'flex';
-}
-
-function hideLoading() {
-  const loadingElement = document.getElementById('loading');
-  loadingElement.style.display = 'none';
-}
 
 // Expose functions to window object for use in HTML
 window.showAddAssetModal = showAddAssetModal;
