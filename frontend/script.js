@@ -1,5 +1,6 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory } from "./declarations/backend/backend.did.js";
+import { Principal } from "@dfinity/principal";
 
 // Initialize Feather Icons
 feather.replace();
@@ -7,10 +8,29 @@ feather.replace();
 let assets = [];
 let backend;
 
-const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND || 'default_canister_id';
+const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:8000" : "https://ic0.app";
 
+function isValidCanisterId(id) {
+  try {
+    Principal.fromText(id);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function initializeBackend() {
+  if (!canisterId) {
+    showError("Canister ID is not set. Please check your environment variables.");
+    return;
+  }
+
+  if (!isValidCanisterId(canisterId)) {
+    showError("Invalid Canister ID. Please check your environment variables.");
+    return;
+  }
+
   try {
     const agent = new HttpAgent({ host });
     backend = Actor.createActor(idlFactory, { agent, canisterId });
@@ -259,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showPage('holdings');
     await fetchAssets();
   } else {
-    showError("Failed to initialize the application. Please try again later.");
+    showError("Failed to initialize the application. Please check your configuration and try again.");
   }
 
   document.getElementById('add-asset-form').addEventListener('submit', async (e) => {
