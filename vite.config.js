@@ -9,7 +9,6 @@ export default defineConfig({
     VitePluginEnvironment({
       VITE_CANISTER_ID_BACKEND: process.env.CANISTER_ID_BACKEND,
       VITE_DFX_NETWORK: process.env.DFX_NETWORK,
-      VITE_FINNHUB_API_KEY: process.env.VITE_FINNHUB_API_KEY,
     }),
   ],
   build: {
@@ -26,6 +25,5 @@ export default defineConfig({
   define: {
     'process.env.VITE_CANISTER_ID_BACKEND': JSON.stringify(process.env.CANISTER_ID_BACKEND),
     'process.env.VITE_DFX_NETWORK': JSON.stringify(process.env.DFX_NETWORK),
-    'process.env.VITE_FINNHUB_API_KEY': JSON.stringify(process.env.VITE_FINNHUB_API_KEY),
   },
 });
