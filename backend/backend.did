@@ -1,22 +1,3 @@
-type HttpResponse = 
- record {
-   body: blob;
-   headers: vec record {
-                  text;
-                  text;
-                };
-   status_code: nat16;
- };
-type HttpRequest = 
- record {
-   body: blob;
-   headers: vec record {
-                  text;
-                  text;
-                };
-   method: text;
-   url: text;
- };
 service : {
-  http_request: (HttpRequest) -> (HttpResponse) query;
+  greet: () -> (text);
 }
