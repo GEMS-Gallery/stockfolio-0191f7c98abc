@@ -127,6 +127,26 @@ async function fetchMarketData(symbol) {
   });
 }
 
+async function fetchCompanyInfo(symbol) {
+  // This is a mock function. In a real application, you would call an actual financial data API.
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const mockCompanies = {
+        'AAPL': 'Apple Inc.',
+        'GOOGL': 'Alphabet Inc.',
+        'MSFT': 'Microsoft Corporation',
+        'AMZN': 'Amazon.com, Inc.',
+        'FB': 'Facebook, Inc.'
+      };
+      if (mockCompanies[symbol]) {
+        resolve({ name: mockCompanies[symbol] });
+      } else {
+        reject(new Error('Company not found'));
+      }
+    }, 500);
+  });
+}
+
 function showPage(pageName) {
   const pages = document.querySelectorAll('#holdings-page, #allocations-page');
   const tabs = document.querySelectorAll('.tab');
@@ -318,6 +338,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     showError("Failed to initialize the application. Please try again later or contact the administrator.");
   }
 
+  const symbolInput = document.getElementById('symbol');
+  const nameInput = document.getElementById('name');
+
+  symbolInput.addEventListener('blur', async () => {
+    const symbol = symbolInput.value.toUpperCase();
+    if (symbol) {
+      try {
+        const companyInfo = await fetchCompanyInfo(symbol);
+        nameInput.value = companyInfo.name;
+      } catch (error) {
+        console.error('Error fetching company info:', error);
+        showError("Unable to fetch company name. Please enter it manually.");
+      }
+    }
+  });
+
   document.getElementById('add-asset-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!isInitialized) {
@@ -325,8 +361,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     const newAsset = {
-      symbol: document.getElementById('symbol').value.toUpperCase(),
-      name: document.getElementById('name').value,
+      symbol: symbolInput.value.toUpperCase(),
+      name: nameInput.value,
       quantity: parseFloat(document.getElementById('quantity').value),
       assetType: document.getElementById('type').value
     };
