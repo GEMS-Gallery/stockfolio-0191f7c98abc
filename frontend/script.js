@@ -140,35 +140,38 @@ async function displayHoldings() {
 }
 
 async function fetchMarketData(symbol) {
-  // This is a mock function. In a real application, you would call an actual market data API.
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        currentPrice: Math.random() * 1000,
-        previousClose: Math.random() * 1000,
-      });
-    }, 100);
-  });
+  try {
+    const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    const currentPrice = data.chart.result[0].meta.regularMarketPrice;
+    const previousClose = data.chart.result[0].meta.previousClose;
+    return { currentPrice, previousClose };
+  } catch (error) {
+    console.error('Error fetching market data:', error);
+    // Return mock data as fallback
+    return {
+      currentPrice: Math.random() * 1000,
+      previousClose: Math.random() * 1000,
+    };
+  }
 }
 
 async function fetchCompanyInfo(symbol) {
-  // This is a mock function. In a real application, you would call an actual financial data API.
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const mockCompanies = {
-        'AAPL': 'Apple Inc.',
-        'GOOGL': 'Alphabet Inc.',
-        'MSFT': 'Microsoft Corporation',
-        'AMZN': 'Amazon.com, Inc.',
-        'FB': 'Facebook, Inc.'
-      };
-      if (mockCompanies[symbol]) {
-        resolve({ name: mockCompanies[symbol] });
-      } else {
-        reject(new Error('Company not found'));
-      }
-    }, 500);
-  });
+  try {
+    const response = await fetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    const name = data.quoteSummary.result[0].price.longName;
+    return { name };
+  } catch (error) {
+    console.error('Error fetching company info:', error);
+    throw new Error('Company not found');
+  }
 }
 
 function showPage(pageName) {
