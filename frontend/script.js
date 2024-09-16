@@ -64,17 +64,9 @@ async function fetchAssetsWithRetry() {
   let attempts = 0;
   while (attempts < MAX_FETCH_ATTEMPTS) {
     try {
-      const response = await backend.http_request({
-        method: "GET",
-        url: "/api/assets",
-        headers: [],
-        body: new Uint8Array(),
-      });
-      if (response.status_code === 200) {
-        return JSON.parse(new TextDecoder().decode(response.body));
-      } else {
-        throw new Error(`HTTP error! status: ${response.status_code}`);
-      }
+      // Assuming the backend has a getAssets method instead of http_request
+      const assets = await backend.getAssets();
+      return assets;
     } catch (error) {
       console.error(`Attempt ${attempts + 1} failed:`, error);
       attempts++;
@@ -220,24 +212,14 @@ async function addAsset(asset) {
 
   try {
     showLoading("Adding asset...");
-    const response = await backend.http_request({
-      method: "POST",
-      url: "/api/assets",
-      headers: [["Content-Type", "application/json"]],
-      body: new TextEncoder().encode(JSON.stringify(asset)),
-    });
+    // Assuming the backend has an addAsset method
+    const newAsset = await backend.addAsset(asset);
     hideLoading();
-    if (response.status_code === 201) {
-      const newAsset = JSON.parse(new TextDecoder().decode(response.body));
-      assets.push(newAsset);
-      displayHoldings();
-      updateCharts();
-      closeAddAssetModal();
-      showSuccess("Asset added successfully!");
-    } else {
-      console.error('Error adding asset:', response);
-      showError("Failed to add asset. Please try again.");
-    }
+    assets.push(newAsset);
+    displayHoldings();
+    updateCharts();
+    closeAddAssetModal();
+    showSuccess("Asset added successfully!");
   } catch (error) {
     console.error('Error adding asset:', error);
     hideLoading();
