@@ -84,9 +84,9 @@ async function fetchAssetsWithRetry() {
 async function fetchAssetsFromExternalAPI() {
   // This is a mock function. In a real application, you would call an actual financial data API.
   return [
-    { symbol: 'AAPL', name: 'Apple Inc.', quantity: 10, assetType: 'Equity' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', quantity: 5, assetType: 'Equity' },
-    { symbol: 'MSFT', name: 'Microsoft Corporation', quantity: 15, assetType: 'Equity' },
+    { symbol: 'AAPL', name: 'Apple Inc.', quantity: 10, assetType: 'Equity', purchasePrice: 150 },
+    { symbol: 'GOOGL', name: 'Alphabet Inc.', quantity: 5, assetType: 'Equity', purchasePrice: 2000 },
+    { symbol: 'MSFT', name: 'Microsoft Corporation', quantity: 15, assetType: 'Equity', purchasePrice: 200 },
   ];
 }
 
@@ -110,7 +110,7 @@ async function displayHoldings() {
 
   if (assets.length === 0) {
     const row = document.createElement('tr');
-    row.innerHTML = '<td colspan="6">No assets found. Add some assets to get started!</td>';
+    row.innerHTML = '<td colspan="7">No assets found. Add some assets to get started!</td>';
     holdingsBody.appendChild(row);
     return;
   }
@@ -120,7 +120,7 @@ async function displayHoldings() {
     const marketPrice = marketData ? parseFloat(marketData.price) : 0;
     const marketValue = marketPrice * asset.quantity;
     const totalGainValue = marketValue - (asset.purchasePrice * asset.quantity);
-    const totalGainPercent = (totalGainValue / (asset.purchasePrice * asset.quantity)) * 100;
+    const totalGainPercent = ((marketPrice - asset.purchasePrice) / asset.purchasePrice) * 100;
 
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -128,6 +128,7 @@ async function displayHoldings() {
       <td>${asset.quantity}</td>
       <td>$${marketValue.toFixed(2)}</td>
       <td>$${marketPrice.toFixed(2)}</td>
+      <td>$${asset.purchasePrice.toFixed(2)}</td>
       <td class="${totalGainValue >= 0 ? 'positive' : 'negative'}">
         ${totalGainPercent >= 0 ? '+' : ''}${totalGainPercent.toFixed(2)}%<br>
         $${totalGainValue.toFixed(2)}
@@ -140,7 +141,7 @@ async function displayHoldings() {
 
 async function fetchStockData(symbol) {
   try {
-    const apiKey = 'crjpakpr01qnnbrso6l0crjpakpr01qnnbrso6lg'; // Your Finnhub API key
+    const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
     const quoteUrl = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
     const profileUrl = `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
 
@@ -348,6 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const symbolInput = document.getElementById('symbol');
   const nameInput = document.getElementById('name');
   const priceInput = document.getElementById('price');
+  const purchasePriceInput = document.getElementById('purchasePrice');
 
   symbolInput.addEventListener('input', async () => {
     const symbol = symbolInput.value.toUpperCase().trim();
@@ -357,9 +359,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (stockData) {
           nameInput.value = stockData.name;
           priceInput.value = stockData.price;
+          purchasePriceInput.value = stockData.price; // Set purchase price to current price by default
         } else {
           nameInput.value = '';
           priceInput.value = '';
+          purchasePriceInput.value = '';
         }
       } catch (error) {
         console.error('Error fetching stock data:', error);
@@ -375,7 +379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       name: nameInput.value,
       quantity: parseFloat(document.getElementById('quantity').value),
       assetType: document.getElementById('type').value,
-      purchasePrice: parseFloat(priceInput.value)
+      purchasePrice: parseFloat(purchasePriceInput.value)
     };
     await addAsset(newAsset);
   });
