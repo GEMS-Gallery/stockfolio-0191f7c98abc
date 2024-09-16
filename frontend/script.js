@@ -10,6 +10,7 @@ let backend;
 let isInitialized = false;
 let initializationAttempts = 0;
 const MAX_INITIALIZATION_ATTEMPTS = 3;
+const MAX_FETCH_ATTEMPTS = 3;
 
 // Use a default canister ID if not set in environment variables
 const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND || "rrkah-fqaaa-aaaaa-aaaaq-cai";
@@ -52,11 +53,37 @@ async function retryInitialization() {
       return true;
     }
     initializationAttempts++;
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+    await new Promise(resolve => setTimeout(resolve, 2000 * initializationAttempts)); // Exponential backoff
   }
   hideLoading();
   showError("Failed to initialize the application. Please try again later or contact the administrator.");
   return false;
+}
+
+async function fetchAssetsWithRetry() {
+  let attempts = 0;
+  while (attempts < MAX_FETCH_ATTEMPTS) {
+    try {
+      const response = await backend.http_request({
+        method: "GET",
+        url: "/api/assets",
+        headers: [],
+        body: new Uint8Array(),
+      });
+      if (response.status_code === 200) {
+        return JSON.parse(new TextDecoder().decode(response.body));
+      } else {
+        throw new Error(`HTTP error! status: ${response.status_code}`);
+      }
+    } catch (error) {
+      console.error(`Attempt ${attempts + 1} failed:`, error);
+      attempts++;
+      if (attempts >= MAX_FETCH_ATTEMPTS) {
+        throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+    }
+  }
 }
 
 async function fetchAssets() {
@@ -67,29 +94,28 @@ async function fetchAssets() {
   }
 
   try {
-    const response = await backend.http_request({
-      method: "GET",
-      url: "/api/assets",
-      headers: [],
-      body: new Uint8Array(),
-    });
-    if (response.status_code === 200) {
-      assets = JSON.parse(new TextDecoder().decode(response.body));
-      displayHoldings();
-      updateCharts();
-    } else {
-      console.error('Error fetching assets:', response);
-      showError("Failed to fetch assets. Please try again later.");
-    }
+    showLoading("Fetching assets...");
+    assets = await fetchAssetsWithRetry();
+    hideLoading();
+    displayHoldings();
+    updateCharts();
   } catch (error) {
     console.error('Error fetching assets:', error);
-    showError("An error occurred while fetching assets. Please try again later.");
+    hideLoading();
+    showError("An error occurred while fetching assets. Please check your network connection and try again.");
   }
 }
 
 async function displayHoldings() {
   const holdingsBody = document.getElementById('holdings-body');
   holdingsBody.innerHTML = '';
+
+  if (assets.length === 0) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td colspan="6">No assets found. Add some assets to get started!</td>';
+    holdingsBody.appendChild(row);
+    return;
+  }
 
   for (const asset of assets) {
     const marketData = await fetchMarketData(asset.symbol);
@@ -193,12 +219,14 @@ async function addAsset(asset) {
   }
 
   try {
+    showLoading("Adding asset...");
     const response = await backend.http_request({
       method: "POST",
       url: "/api/assets",
       headers: [["Content-Type", "application/json"]],
       body: new TextEncoder().encode(JSON.stringify(asset)),
     });
+    hideLoading();
     if (response.status_code === 201) {
       const newAsset = JSON.parse(new TextDecoder().decode(response.body));
       assets.push(newAsset);
@@ -212,6 +240,7 @@ async function addAsset(asset) {
     }
   } catch (error) {
     console.error('Error adding asset:', error);
+    hideLoading();
     showError("An error occurred while adding the asset. Please try again.");
   }
 }
